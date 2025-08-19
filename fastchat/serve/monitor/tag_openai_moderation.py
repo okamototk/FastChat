@@ -18,12 +18,14 @@ API_ERROR_OUTPUT = "$ERROR$"
 
 
 def tag_moderation(text):
+    client = openai.OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     result = API_ERROR_OUTPUT
     for _ in range(API_MAX_RETRY):
         try:
-            result = openai.Moderation.create(input=text)["results"][0]
+            result_obj = client.moderations.create(input=text).results[0]
+            result = result_obj.model_dump()
             break
-        except openai.error.OpenAIError as e:
+        except (openai.OpenAIError,) as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)
 

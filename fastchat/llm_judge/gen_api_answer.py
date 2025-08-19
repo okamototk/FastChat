@@ -114,10 +114,14 @@ if __name__ == "__main__":
         "--parallel", type=int, default=1, help="The number of concurrent API calls."
     )
     parser.add_argument("--openai-api-base", type=str, default=None)
+    parser.add_argument("--openai-api-key", type=str, default=None)
     args = parser.parse_args()
 
+    # Allow overriding env by args for OpenAI key/base
     if args.openai_api_base is not None:
-        openai.api_base = args.openai_api_base
+        os.environ["OPENAI_API_BASE"] = args.openai_api_base
+    if args.openai_api_key is not None:
+        os.environ["OPENAI_API_KEY"] = args.openai_api_key
 
     question_file = f"data/{args.bench_name}/question.jsonl"
     questions = load_questions(question_file, args.question_begin, args.question_end)

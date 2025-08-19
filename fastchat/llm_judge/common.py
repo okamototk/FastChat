@@ -405,23 +405,31 @@ def play_a_match_pair(match: MatchPair, output_file: str):
 
 
 def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
+    # Use v1 client API
     if api_dict is not None:
-        openai.api_base = api_dict["api_base"]
-        openai.api_key = api_dict["api_key"]
+        client = openai.OpenAI(
+            base_url=api_dict.get("api_base") or os.environ.get("OPENAI_API_BASE"),
+            api_key=api_dict.get("api_key") or os.environ.get("OPENAI_API_KEY"),
+        )
+    else:
+        # Falls back to env OPENAI_API_KEY if set
+        base_url = os.environ.get("OPENAI_API_BASE")
+        client = openai.OpenAI(base_url=base_url) if base_url else openai.OpenAI()
+
     output = API_ERROR_OUTPUT
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
+            response = client.chat.completions.create(
                 model=model,
                 messages=messages,
                 n=1,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            output = response["choices"][0]["message"]["content"]
+            output = response.choices[0].message.content
             break
-        except openai.error.OpenAIError as e:
+        except (openai.RateLimitError, openai.BadRequestError, openai.APIConnectionError, openai.InternalServerError, openai.OpenAIError) as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)
 
@@ -429,14 +437,19 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
 
 
 def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=None):
-    openai.api_type = "azure"
-    openai.api_version = "2023-07-01-preview"
+    # Azure OpenAI via v1 client
     if api_dict is not None:
-        openai.api_base = api_dict["api_base"]
-        openai.api_key = api_dict["api_key"]
+        azure_endpoint = api_dict.get("api_base") or os.environ.get("AZURE_OPENAI_ENDPOINT")
+        api_key = api_dict.get("api_key") or os.environ.get("AZURE_OPENAI_KEY")
     else:
-        openai.api_base = os.environ["AZURE_OPENAI_ENDPOINT"]
-        openai.api_key = os.environ["AZURE_OPENAI_KEY"]
+        azure_endpoint = os.environ.get("AZURE_OPENAI_ENDPOINT")
+        api_key = os.environ.get("AZURE_OPENAI_KEY")
+
+    client = openai.AzureOpenAI(
+        api_version="2023-07-01-preview",
+        azure_endpoint=azure_endpoint,
+        api_key=api_key,
+    )
 
     if "azure-" in model:
         model = model[6:]
@@ -445,23 +458,24 @@ def chat_completion_openai_azure(model, conv, temperature, max_tokens, api_dict=
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = openai.ChatCompletion.create(
-                engine=model,
+            response = client.chat.completions.create(
+                model=model,  # deployment name for Azure
                 messages=messages,
                 n=1,
                 temperature=temperature,
                 max_tokens=max_tokens,
             )
-            output = response["choices"][0]["message"]["content"]
+            output = response.choices[0].message.content
             break
-        except openai.error.OpenAIError as e:
+        except (openai.BadRequestError, openai.RateLimitError, openai.APIConnectionError, openai.InternalServerError, openai.OpenAIError) as e:
             print(type(e), e)
             time.sleep(API_RETRY_SLEEP)
-        except openai.error.InvalidRequestError as e:
-            print(type(e), e)
-            break
         except KeyError:
-            print(response)
+            # Unexpected response shape
+            try:
+                print(response)
+            except Exception:
+                pass
             break
 
     return output

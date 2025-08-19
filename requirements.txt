@@ -1,0 +1,41 @@
+# Locked production dependencies for FastChat
+# Generated on 2025-08-19
+
+# Core runtime
+fastapi
+httpx
+markdown2[all]
+nh3
+numpy
+prompt_toolkit>=3.0.0
+pydantic>=2,<3
+pydantic-settings
+psutil
+requests
+rich>=10.0.0
+shortuuid
+tiktoken
+uvicorn
+
+# Model worker extras
+accelerate>=0.21
+peft
+sentencepiece
+torch
+transformers>=4.31.0
+protobuf
+openai==1.100.1
+anthropic
+
+# Web UI
+gradio>=4.10
+plotly
+scipy
+
+# Training
+einops
+flash-attn>=2.0
+wandb
+
+# LLM judge tools
+ray
