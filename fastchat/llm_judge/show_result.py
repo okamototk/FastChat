@@ -5,6 +5,13 @@ python3 show_result.py --mode [single|pairwise-baseline|pairwise-all]
 import argparse
 import pandas as pd
 
+second_turn_avaiable_bench = [
+    "mt_bench",
+    "mt_bench_math",
+    "mt_bench_multi_turn",
+    "mt_bench_math_multi_turn",
+    "japanese_mt_benchh"
+]
 
 def display_result_single(args):
     if args.input_file is None:
@@ -26,7 +33,7 @@ def display_result_single(args):
     df_1 = df[df["turn"] == 1].groupby(["model", "turn"]).mean()
     print(df_1.sort_values(by="score", ascending=False))
 
-    if args.bench_name == "mt_bench":
+    if args.bench_name in second_turn_avaiable_bench:
         print("\n########## Second turn ##########")
         df_2 = df[df["turn"] == 2].groupby(["model", "turn"]).mean()
         print(df_2.sort_values(by="score", ascending=False))
