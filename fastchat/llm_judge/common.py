@@ -420,13 +420,23 @@ def chat_completion_openai(model, conv, temperature, max_tokens, api_dict=None):
     for _ in range(API_MAX_RETRY):
         try:
             messages = conv.to_openai_api_messages()
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                n=1,
-                temperature=temperature,
-                max_tokens=max_tokens,
-            )
+            # Use correct token parameter for new models
+            if model.startswith("gpt-5") or model in ["gpt-5-mini-2025-08-07"]:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    n=1,
+                    temperature=temperature,
+                    max_completion_tokens=max_tokens,
+                )
+            else:
+                response = client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    n=1,
+                    temperature=temperature,
+                    max_tokens=max_tokens,
+                )
             output = response.choices[0].message.content
             break
         except (openai.RateLimitError, openai.BadRequestError, openai.APIConnectionError, openai.InternalServerError, openai.OpenAIError) as e:
