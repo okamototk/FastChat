@@ -207,6 +207,18 @@ if __name__ == "__main__":
     parser.add_argument(
         "--first-n", type=int, help="A debug option. Only run the first `n` judgments."
     )
+    parser.add_argument(
+        "--openai-api-base",
+        type=str,
+        default=None,
+        help="Base URL for OpenAI API (overrides OPENAI_API_BASE env var)."
+    )
+    parser.add_argument(
+        "--openai-api-key",
+        type=str,
+        default=None,
+        help="API key for OpenAI API (overrides OPENAI_API_KEY env var)."
+    )
     args = parser.parse_args()
 
     question_file = f"data/{args.bench_name}/question.jsonl"
@@ -223,6 +235,15 @@ if __name__ == "__main__":
     # Load judge
     judge_prompts = load_judge_prompts(args.judge_file)
 
+    # Prepare api_dict for OpenAI API
+    api_dict = {}
+    if args.openai_api_base:
+        api_dict["api_base"] = args.openai_api_base
+    if args.openai_api_key:
+        api_dict["api_key"] = args.openai_api_key
+    if not api_dict:
+        api_dict = None
+
     if args.first_n:
         questions = questions[: args.first_n]
 
@@ -232,7 +253,7 @@ if __name__ == "__main__":
         models = args.model_list
 
     if args.mode == "single":
-        judges = make_judge_single(args.judge_model, judge_prompts)
+        judges = make_judge_single(args.judge_model, judge_prompts, api_dict=api_dict)
         play_a_match_func = play_a_match_single
         output_file = (
             f"data/{args.bench_name}/model_judgment/{args.judge_model}_single.jsonl"
@@ -240,7 +261,7 @@ if __name__ == "__main__":
         make_match_func = make_match_single
         baseline_model = None
     else:
-        judges = make_judge_pairwise(args.judge_model, judge_prompts)
+        judges = make_judge_pairwise(args.judge_model, judge_prompts, api_dict=api_dict)
         play_a_match_func = play_a_match_pair
         output_file = (
             f"data/{args.bench_name}/model_judgment/{args.judge_model}_pair.jsonl"

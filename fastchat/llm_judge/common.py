@@ -61,6 +61,7 @@ class Judge:
     prompt_template: dict
     ref_based: bool = False
     multi_turn: bool = False
+    api_dict: dict = None  # For OpenAI API base/key
 
 
 @dataclasses.dataclass
