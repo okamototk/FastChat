@@ -89,8 +89,20 @@ OPENAI_MODEL_LIST = (
     "gpt-4o-2024-08-06",
     "chatgpt-4o-latest-20240903",
     "chatgpt-4o-latest",
-    "o1-preview",
+    "o1",
     "o1-mini",
+    "o1-preview",
+    "gpt-4.1",
+    "gpt-4.1-mini",
+    "gpt-4.1-nano",
+    "gpt-5",
+    "gpt-5-mini",
+    "gpt-5-nano",
+    "gpt-oss-120b",
+    "gpt-oss-20b",
+    "o3",
+    "o3-mini",
+    "o3-pro"
 )
 
 
