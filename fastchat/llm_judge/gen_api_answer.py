@@ -23,9 +23,8 @@ from fastchat.llm_judge.common import (
 from fastchat.llm_judge.gen_model_answer import reorg_answer_file
 from fastchat.model.model_adapter import get_conversation_template, ANTHROPIC_MODEL_LIST
 
-
 def get_answer(
-    question: dict, model: str, num_choices: int, max_tokens: int, answer_file: str
+    question: dict, model: str, num_choices: int, max_tokens: int, answer_file: str, api_dict = None
 ):
     assert (
         args.force_temperature is not None and "required_temperature" in question.keys()
@@ -56,7 +55,7 @@ def get_answer(
                     chat_state, model, conv, temperature, max_tokens
                 )
             else:
-                output = chat_completion_openai(model, conv, temperature, max_tokens)
+                output = chat_completion_openai(model, conv, temperature, max_tokens, api_dict)
 
             conv.update_last_message(output)
             turns.append(output)
@@ -117,11 +116,11 @@ if __name__ == "__main__":
     parser.add_argument("--openai-api-key", type=str, default=None)
     args = parser.parse_args()
 
-    # Allow overriding env by args for OpenAI key/base
-    if args.openai_api_base is not None:
-        os.environ["OPENAI_API_BASE"] = args.openai_api_base
-    if args.openai_api_key is not None:
-        os.environ["OPENAI_API_KEY"] = args.openai_api_key
+    # OPenAI API parameter config
+    api_dict = {
+        "api_base": args.openai_api_base or os.environ.get("OPENAI_API_BASE", None),
+        "api_key": args.openai_api_key or os.environ.get("OPENAI_API_KEY", None),
+    }
 
     question_file = f"data/{args.bench_name}/question.jsonl"
     questions = load_questions(question_file, args.question_begin, args.question_end)
@@ -142,6 +141,7 @@ if __name__ == "__main__":
                 args.num_choices,
                 args.max_tokens,
                 answer_file,
+                api_dict,
             )
             futures.append(future)
 
